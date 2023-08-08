@@ -1,0 +1,40 @@
+name: actions
+run-name: ${{ github.event.inputs.sku }}, ${{ github.event.inputs.minutes }}m
+on:
+  workflow_dispatch:
+    inputs:
+      sku:
+        type: choice
+        description: SKU
+        options:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+          - "--- macOS XL Runners ---"
+          - macos-13-xl
+          # Larger runners with matching labels needs to be created in org settings
+          - "--- Larger Runners ---"
+          - ubuntu-4-core
+          - ubuntu-8-core
+          - ubuntu-16-core
+          - ubuntu-32-core
+          - ubuntu-64-core
+          - windows-8-core
+          - windows-16-core
+          - windows-32-core
+          - windows-64-core
+      minutes:
+        description: Minutes
+        default: "10"
+        required: true
+jobs:
+  run:
+    runs-on: ${{ github.event.inputs.sku }}
+    steps:
+      - run: echo "😴 Sleeping for ${{ github.event.inputs.minutes }} minute(s) to generate Actions usage"
+      # Subtract 50 seconds to accommodate for the time spent on the previous steps.
+      # We round the run time minutes up when reporting billable minutes.
+      # Example: Input minutes = 5. Time spent on the previous steps = 3 s.
+      # 5 * 60 - 50 + 3 = 253s = 4.21 run minutes = 5 billable minutes.
+      # The 10 extra seconds are used as buffer in case the previous run time was 0 (I guess this should never happen 😅)
+      - run: sleep $((${{ github.event.inputs.minutes }} * 60 - 50))

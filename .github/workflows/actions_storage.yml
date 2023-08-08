@@ -1,0 +1,21 @@
+name: actions_storage
+run-name: ${{ github.event.inputs.gigabytes }}GB
+on:
+  workflow_dispatch:
+    inputs:
+      gigabytes:
+        description: Gigabytes
+        default: "1"
+        required: true
+jobs:
+  upload_artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate artifact
+        shell: pwsh
+        run: |
+          [io.file]::Create("artifact.txt").SetLength(${{ github.event.inputs.gigabytes }}GB).Close
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.event.inputs.gigabytes }}GB-artifact.txt
+          path: artifact.txt

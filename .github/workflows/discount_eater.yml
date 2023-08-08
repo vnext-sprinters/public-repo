@@ -1,0 +1,45 @@
+name: Discount Eater 🍗
+# Discount Eater uses macos-latest to consume the desired amount of dollars as fast as possible.
+# Useful when testing plan discounts.
+on:
+  workflow_dispatch:
+    inputs:
+      dollars:
+        description: Dollars
+        default: "400"
+        required: true
+env:
+  MINUTES: 30
+jobs:
+  set_variables:
+    runs-on: ubuntu-latest
+    outputs:
+      iterator: ${{ steps.iterator.outputs.iterator }}
+    steps:
+      - name: Iterator
+        id: iterator 
+        # 0.08 = macos-latest price/min
+        run: |
+          iterator=$(node -e "console.log(JSON.stringify([...Array(Math.ceil(${{ github.event.inputs.dollars }} / 0.08 / ${{ env.MINUTES }})).keys()]))")
+          echo $iterator
+          echo "::set-output name=iterator::$iterator"
+  run:
+    runs-on: macos-latest
+    needs:
+      - set_variables
+    strategy:
+      matrix:
+        i: ${{ fromJSON(needs.set_variables.outputs.iterator) }}
+      fail-fast: false
+      # https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration#usage-limits
+      # max-parallel: 10
+    steps:
+      - run: echo "😴 Sleeping for ${{ env.MINUTES }} minute(s) to generate Actions usage"
+      # Subtract 50 seconds to accommodate for the time spent on the previous steps.
+      # We round the run time minutes up when reporting billable minutes.
+      # Example: Input minutes = 5. Time spent on the previous steps = 3 s.
+      # 5 * 60 - 50 + 3 = 253s = 4.21 run minutes = 5 billable minutes.
+      # The 10 extra seconds are used as buffer in case the previous run time was 0 (I guess this should never happen 😅)
+      - run: sleep $((${{ env.MINUTES }} * 60 - 50))
+
+  
